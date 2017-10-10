@@ -16,7 +16,7 @@ app.get('/', function(req, res) {
 
 app.get('/todos', function(req, res) {
   var query = req.query;
-  var where = {}
+  var where = {};
 
   if (query.hasOwnProperty('completed') && query.completed == 'true') {
     where.completed = true;
@@ -61,14 +61,19 @@ app.post('/todos', function(req, res) {
 
 app.delete('/todos/:id', function(req, res) {
   var todoId = parseInt(req.params.id, 10);
-  var matchedTodoId = _.findWhere(todos, {id: todoId});
-
-  if (matchedTodoId) {
-    todos = _.without(todos, matchedTodoId);
-    res.json(matchedTodoId);
-  } else {
-    res.status(404).json({"error":"no todo found with that id"});
-  }
+  db.todo.destroy({
+    where: {
+      id: todoId
+    }
+  }).then(function(rowsDeleted) {
+    if (rowsDeleted === 0) {
+      res.status(404).json({error: 'No todo with that id'});
+    } else {
+      res.status(204).send();
+    }
+  }, function(e) {
+    res.status(500).send();
+  });
 });
 
 app.put('/todos/:id', function(req, res) {
