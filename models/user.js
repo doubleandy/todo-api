@@ -43,10 +43,32 @@ module.exports = function (sequelize, DataTypes) {
     }
   });
 
+  User.authenticate = function(body) {
+    return new Promise(function(resolve, reject) {
+      if (typeof body.email !== 'string' || typeof body.password !== 'string') {
+        return reject();
+      }
+
+      User.findOne({
+        where: {
+          email: body.email
+        }
+      }).then(function(user) {
+        if(!user || !bcrypt.compareSync(body.password, user.get('password_hash'))) {
+          return reject();
+        }
+        resolve(user);
+
+      }, function(e) {
+        reject();
+      });
+    });
+  }
+
   User.prototype.toPublicJSON = function() {
     var json = this.toJSON();
     return _.pick(json, 'id', 'email', 'createdAt', 'updatedAt');
   };
 
-  return User
+  return User;
 }
